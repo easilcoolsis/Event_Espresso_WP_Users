@@ -4,11 +4,11 @@ if (! defined('ABSPATH')) {
     exit('No direct script access allowed');
 }
 /*
-  Plugin Name:  Event Espresso - WP Users (EE4.6+)
+  Plugin Name:  AlphaStar Parent Users 
   Plugin URI:  http://www.eventespresso.com
   Description: This adds the WP users integration.
   Version: 2.0.19.p
-  Author: Event Espresso
+  Author: AlphaStar
   Author URI: http://www.eventespresso.com
   License: GPLv2
   TextDomain: event_espresso
@@ -30,7 +30,7 @@ if (! defined('ABSPATH')) {
  */
 
 /**
- * EE WPUsers add-on for Event Espresso
+ * AlphaStar Parent Users for Event Espresso
  *
  * @since        1.0.0
  * @package      EE WPUsers
