@@ -45,8 +45,6 @@ endif;
     <table class="espresso-my-events-table <?php echo $template_slug; ?>_table">
         <thead>
         <tr>
-            <th scope="col" class="espresso-my-events-reg-status ee-status-strip">
-            </th>
             <th scope="col" class="espresso-my-events-event-th">
                 <?php echo apply_filters(
                     'FHEE__loop-espresso_my_events__table_header_event',

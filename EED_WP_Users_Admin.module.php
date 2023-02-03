@@ -27,12 +27,13 @@ class EED_WP_Users_Admin extends EED_Module
         add_action('post_submitbox_misc_actions', array('EED_WP_Users_Admin', 'add_link_to_wp_user_account'));
         
         // hook into wp users
-        add_action('edit_user_profile', array('EED_WP_Users_Admin', 'add_link_to_ee_contact_details'));
-        add_action('show_user_profile', array('EED_WP_Users_Admin', 'add_link_to_ee_contact_details'));
-        add_action('edit_user_profile', array('EED_WP_Users_Admin', 'view_registrations_for_contact'));
-        add_action('show_user_profile', array('EED_WP_Users_Admin', 'view_registrations_for_contact'));
-        add_action('profile_update', array('EED_WP_Users_Admin', 'sync_with_contact'), 10, 2);
-        add_action('user_register', array('EED_WP_Users_Admin', 'sync_with_contact'));
+        add_action('wp_login', 'redirect_my_courses', 10, 2);
+        // add_action('edit_user_profile', array('EED_WP_Users_Admin', 'add_link_to_ee_contact_details'));
+        // add_action('show_user_profile', array('EED_WP_Users_Admin', 'add_link_to_ee_contact_details'));
+        // add_action('edit_user_profile', array('EED_WP_Users_Admin', 'view_registrations_for_contact'));
+        // add_action('show_user_profile', array('EED_WP_Users_Admin', 'view_registrations_for_contact'));
+        // add_action('profile_update', array('EED_WP_Users_Admin', 'sync_with_contact'), 10, 2);
+        // add_action('user_register', array('EED_WP_Users_Admin', 'sync_with_contact'));
         
         // hook into attendee saves
         add_filter(
@@ -128,7 +129,11 @@ class EED_WP_Users_Admin extends EED_Module
         );
     }
     
-    
+    public function redirect_my_courses()
+    {
+        wp_redirect(home_url() . "/my-courses");
+    }
+
     public static function admin_enqueue_scripts_styles()
     {
         if (get_current_screen()->base == 'profile' || get_current_screen()->base == 'user-edit') {
@@ -239,28 +244,57 @@ class EED_WP_Users_Admin extends EED_Module
         }
         
         // is there an attadched EE_Attendee?
-        $att_id = get_user_option('EE_Attendee_ID', $user->ID);
-        
-        if (empty($att_id)) {
-            return; // bail, no attached attendee_id.
+        ?>
+
+        <h3><?php IS_PROFILE_PAGE ? _e('All your registrations', 'event_espresso') : _e('All Registrations for this user', 'event_espresso'); ?></h3>
+        <div class="admin-primary-mbox-dv">
+        <br/>
+
+        <div class="admin-primary-mbox-tbl-wrap">
+            <table class="admin-primary-mbox-tbl">
+                <thead>
+                <tr>
+                    <th class="jst-left"><?php esc_html_e('Event Name', 'event_espresso');?></th>
+                    <th class="jst-left"><?php esc_html_e('REG ID', 'event_espresso');?></th>
+                    <th class="jst-left"><?php esc_html_e('TXN ID', 'event_espresso');?></th>
+                    <th class="jst-left"><?php esc_html_e('Reg Code', 'event_espresso');?></th>
+                    <th class="jst-rght"><?php esc_html_e('Ticket Price', 'event_espresso');?></th>
+                </tr>
+                </thead>
+        <?php
+        $attendees = EED_WP_Users_SPCO::get_attendees_for_user($user);
+        foreach ($attendees as $index => $attendee) {
+
+            $att_id = get_user_option('EE_Attendee_ID-'.$attendee->ID(), $user->ID);
+            
+            if (empty($att_id)) {
+                return; // bail, no attached attendee_id.
+            }
+            
+            // grab contact
+            $contact = EEM_Attendee::instance()->get_one_by_ID($att_id);
+            
+            // if no contact then bail
+            if (! $contact instanceof EE_Attendee) {
+                return;
+            }
+            
+            $template_args = array(
+                'attendee'      => $contact,
+                'registrations' => $contact->get_many_related('Registration')
+            );
+
+            EEH_Template::display_template(
+                EE_WPUSERS_TEMPLATE_PATH . 'eea-wp-users-registrations-table.template.php',
+                $template_args
+            );
         }
-        
-        // grab contact
-        $contact = EEM_Attendee::instance()->get_one_by_ID($att_id);
-        
-        // if no contact then bail
-        if (! $contact instanceof EE_Attendee) {
-            return;
-        }
-        
-        $template_args = array(
-            'attendee'      => $contact,
-            'registrations' => $contact->get_many_related('Registration')
-        );
-        EEH_Template::display_template(
-            EE_WPUSERS_TEMPLATE_PATH . 'eea-wp-users-registrations-table.template.php',
-            $template_args
-        );
+
+        ?>
+           </table>
+         </div>
+      </div>
+      <?php
     }
     
     
@@ -417,7 +451,7 @@ class EED_WP_Users_Admin extends EED_Module
         // no attached EE_Attendee. Is there an existing attendee that matches this user's details?
         $att = self::_find_existing_attendee_from_wpuser($user);
         if ($att instanceof EE_Attendee && ! EE_WPUsers::get_attendee_user($att->ID())) {
-            update_user_option($user->ID, 'EE_Attendee_ID', $att->ID());
+            update_user_option($user->ID, 'EE_Attendee_ID-'.$att->ID(), $att->ID());
         }
         
         return $att;
@@ -464,7 +498,7 @@ class EED_WP_Users_Admin extends EED_Module
         $att->save();
         
         // attach to user
-        update_user_option($user->ID, 'EE_Attendee_ID', $att->ID());
+        update_user_option($user->ID, 'EE_Attendee_ID-'.$att->ID(), $att->ID());
         
         return $att;
     }

@@ -10,7 +10,7 @@
 $registrations = $event->get_many_related('Registration', array(array('ATT_ID' => $att_id)));
 ?>
 <tr class="ee-my-events-event-section-summary-row">
-    <td class="ee-status-strip event-status-<?php echo $event->get_active_status(); ?>"></td>
+
     <td>
         <a aria-label="<?php printf(esc_html__('Link to %s', 'event_espresso'), $event->name()); ?>"
            href="<?php echo esc_url_raw(get_permalink($event->ID())); ?>"
@@ -58,27 +58,7 @@ $registrations = $event->get_many_related('Registration', array(array('ATT_ID' =
                 ?>
                 <?php echo apply_filters('the_content', $event->description()); ?>
             </section>
-            <?php
-            /**
-             * For now this will just grab the first venue related to the event.  However when we move to multiple
-             * venues per event and/or datetime, this could be modified to have the map show all venues and then list
-             * them in the right section
-             */
-            $venue = reset($venues);
-            if ($venue instanceof EE_Venue) :
-                ?>
-                <section class="ee-my-events-event-section-location-map ee-my-events-one-third">
-                    <?php
-                    EE_Registry::instance()->load_Helper('Venue_View');
-                    echo EEH_Venue_View::espresso_google_static_map($venue);
-                    ?>
-                </section>
-                <section class="ee-my-events-event-section-location-details ee-my-events-two-thirds">
-                    <strong><?php echo $venue->name(); ?></strong>
-                    <?php echo EEH_Venue_View::venue_address('multiline', $venue->ID()); ?>
-                </section>
-                <div style="clear:both"></div>
-            <?php endif; // end venue check ?>
+            
             <section class="ee-my-events-event-section-tickets-list-table-container">
                 <h3><?php echo $your_tickets_title; ?></h3>
                 <?php if ($registrations) : ?>

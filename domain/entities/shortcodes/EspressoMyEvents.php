@@ -14,6 +14,7 @@ use EEH_URL;
 use EEH_Template;
 use WP_Query;
 use EEH_File;
+use EED_WP_Users_SPCO;
 
 class EspressoMyEvents extends EspressoShortcode
 {
@@ -175,13 +176,14 @@ class EspressoMyEvents extends EspressoShortcode
     {
         // If use is not logged in, then we display a link to login.
         if (! is_user_logged_in()) {
-            $redirect_url = EEH_URL::current_url();
+            $redirect_url = "/my-courses";
             /**
              * This filter is using the old filter identifier for back compat.
              */
             return apply_filters(
                 'FHEE__Espresso_My_Events__process_shortcode__redirect_to_login_instructions',
-                '<a class="ee-wpui-login-link" href="' . wp_login_url($redirect_url) . '">'
+                '<a style="font-family: mathone;color: #101D51; font-weight:normal; font-size:18px;" href="' . wp_login_url($redirect_url) . '">
+                '
                 . esc_html__('Login to see your registrations.', 'event_espresso') . '</a>'
             );
         }
@@ -248,7 +250,7 @@ class EspressoMyEvents extends EspressoShortcode
             'FHEE__EES_Espresso_My_Events__process_shortcode__default_shortcode_atts',
             array(
                 'template'           => 'event_section',
-                'your_events_title'  => esc_html__('Your Registrations', 'event_espresso'),
+                'your_events_title'  => esc_html__('', 'event_espresso'),
                 'your_tickets_title' => esc_html__('Your Tickets', 'event_espresso'),
                 'per_page'           => 100,
                 'with_wrapper'       => $with_wrapper,
@@ -320,21 +322,28 @@ class EspressoMyEvents extends EspressoShortcode
             'path_to_template'   => $template_info['path'],
             'page'               => $page,
             'object_count'       => 0,
-            'att_id'             => 0,
+            'att_id'             => array(),
             'with_wrapper'       => $attributes['with_wrapper'],
         );
+        $user = wp_get_current_user();
+        // grab any contact that is attached to this 
+        $attendees = EED_WP_Users_SPCO::get_attendees_for_user($user->ID);
+        $objects = array();
+        foreach ($attendees as $index => $attendee) {
 
-        // grab any contact that is attached to this user
-        $attendee_id = get_user_option('EE_Attendee_ID', get_current_user_id());
+            $attendee_id = get_user_option('EE_Attendee_ID-'.$attendee->ID(), get_current_user_id());
 
-        // if there is an attached attendee we can use that to retrieve all the related events and
-        // registrations.  Otherwise those will be left empty.
-        if ($attendee_id) {
-            $object_info = $this->getTemplateObjects($attendee_id, $template_args);
-            $template_args['objects'] = $object_info['objects'];
-            $template_args['object_count'] = $object_info['object_count'];
-            $template_args['att_id'] = $attendee_id;
+            // if there is an attached attendee we can use that to retrieve all the related events and
+            // registrations.  Otherwise those will be left empty.
+            if ($attendee_id) {
+                $object_info = $this->getTemplateObjects($attendee_id, $template_args);
+                $object_info['att_id'] = $attendee_id;
+                $template_args['att_id'][] = $attendee_id;
+                $template_args['object_count']= $object_info['object_count'];
+                $objects[] = $object_info;
+            }
         }
+        $template_args['objects'] = $objects;
         return $template_args;
     }
 
@@ -376,7 +385,6 @@ class EspressoMyEvents extends EspressoShortcode
             'path'        => 'loop-espresso_my_events-event_section.template.php',
         );
     }
-
 
     protected function getTemplateObjectMap()
     {

@@ -67,12 +67,12 @@ class EED_WP_Users_SPCO extends EED_Module
             10,
             4
         );
-        add_filter(
-            'FHEE_EE_Single_Page_Checkout__save_registration_items__find_existing_attendee',
-            array('EED_WP_Users_SPCO', 'maybe_sync_existing_attendee'),
-            10,
-            3
-        );
+        // add_filter(
+        //     'FHEE_EE_Single_Page_Checkout__save_registration_items__find_existing_attendee',
+        //     array('EED_WP_Users_SPCO', 'maybe_sync_existing_attendee'),
+        //     10,
+        //     3
+        // );
         add_filter(
             'FHEE__EE_SPCO_Reg_Step_Attendee_Information___process_registrations__pre_registration_process',
             array('EED_WP_Users_SPCO', 'verify_user_access'),
@@ -131,12 +131,12 @@ class EED_WP_Users_SPCO extends EED_Module
                 10,
                 4
             );
-            add_filter(
-                'FHEE_EE_Single_Page_Checkout__save_registration_items__find_existing_attendee',
-                array('EED_WP_Users_SPCO', 'maybe_sync_existing_attendee'),
-                10,
-                3
-            );
+            // add_filter(
+            //     'FHEE_EE_Single_Page_Checkout__save_registration_items__find_existing_attendee',
+            //     array('EED_WP_Users_SPCO', 'maybe_sync_existing_attendee'),
+            //     10,
+            //     3
+            // );
             add_filter(
                 'FHEE__EE_SPCO_Reg_Step_Attendee_Information___process_registrations__pre_registration_process',
                 array('EED_WP_Users_SPCO', 'verify_user_access'),
@@ -297,17 +297,7 @@ class EED_WP_Users_SPCO extends EED_Module
         ) {
             return $content;
         }
-        return '<br><div class="highlight-bg">'
-               . sprintf(
-                   esc_html__(
-                       '%1$sNote%2$s: Changes made in your Personal Information details will be synced with your user profile.',
-                       'event_espresso'
-                   ),
-                   '<strong>',
-                   '</strong>'
-               )
-               . '</div>'
-               . $content;
+        return  $content;
     }
 
 
@@ -374,7 +364,6 @@ class EED_WP_Users_SPCO extends EED_Module
         return $form_input === 'sync_with_user_profile';
     }
 
-
     /**
      * Added to filter that processes the return to the registration form of whether and answer to the question exists
      * for that
@@ -392,13 +381,24 @@ class EED_WP_Users_SPCO extends EED_Module
         $question_id,
         $system_id = null
     ) {
+        $firstname = 0;
+        $lastname  = 0;
+        $email     = 0;
+        $address   = 0;
+        $address2  = 0;
+        $phone     = 0;
+        $city      = 0;
+        $country   = 0;
+        $state     = 0;
+        $zip       = 0;
+        $id_to_use = -1;
         // only fill for primary registrant
         if (! $registration->is_primary_registrant()) {
             return $value;
         }
         if (empty($value)) {
             $current_user = wp_get_current_user();
-            /**
+                   /**
              * there was a temporary bug in EE core relating to $question_id being passed
              * in 4.8.10 it was a question's ID (eg 23)
              * but in 4.8.11 it was changed to a SYSTEM ID (eg 'email')
@@ -407,33 +407,23 @@ class EED_WP_Users_SPCO extends EED_Module
              * BACK to a proper question ID (eg 23) and a new parameter was passed,
              * $system_id
              */
-            if (is_numeric($question_id) && ! defined('EEM_Attendee::system_question_fname')) {
-                // 4.8.10-style. Use the old constants
-                $firstname = EEM_Attendee::fname_question_id;
-                $lastname  = EEM_Attendee::lname_question_id;
-                $email     = EEM_Attendee::email_question_id;
-                $id_to_use = $question_id;
-            } elseif (! is_numeric($question_id) && defined('EEM_Attendee::system_question_fname')) {
+
+        
                 // 4.8.11-style. Use the new constants
-                $firstname = EEM_Attendee::system_question_fname;
-                $lastname  = EEM_Attendee::system_question_lname;
-                $email     = EEM_Attendee::system_question_email;
-                $id_to_use = $question_id;
-            } elseif (is_numeric($question_id) && defined('EEM_Attendee::system_question_fname')) {
-                // 4.8.12-style. Use the new constants and the $system_id
-                $firstname = EEM_Attendee::system_question_fname;
-                $lastname  = EEM_Attendee::system_question_lname;
-                $email     = EEM_Attendee::system_question_email;
-                $id_to_use = $system_id;
-            } else {
-                // ! is_numeric( $question_id ) && defined( 'EEM_Attendee::system_question_fname' )
-                // weird shouldn't ever happen. Just use the old default
-                $firstname = EEM_Attendee::fname_question_id;
-                $lastname  = EEM_Attendee::lname_question_id;
-                $email     = EEM_Attendee::email_question_id;
-                $id_to_use = $question_id;
+                $address     = 4;
+                $address2    = 5;
+                $city       = 6;
+                $country    = 7;
+                $state      = 8;
+                $zip        = 9;
+                $firstname  = 13;
+                $lastname   = 14;
+                $email      = 15;
+                $phone      = 11;    
+                $id_to_use = $question_id; 
             }
-            if ($current_user instanceof WP_User) {
+
+           if ($current_user instanceof WP_User) {
                 switch ($id_to_use) {
                     case $firstname:
                         $value = $current_user->get('first_name');
@@ -444,10 +434,30 @@ class EED_WP_Users_SPCO extends EED_Module
                     case $email:
                         $value = $current_user->get('user_email');
                         break;
+                    case $address:
+                        $value =  get_user_meta( get_current_user_id(), 'paddress', true );
+                        break;
+                    case $address2:
+                        $value =  get_user_meta( get_current_user_id(), 'psecondaddress', true );
+                        break;
+                    case $phone:
+                        $value =  get_user_meta( get_current_user_id(), 'phone', true );
+                        break;
+                    case $country:
+                        $value =  get_user_meta( get_current_user_id(), 'country', true );
+                        break;
+                    case $city:
+                        $value =  get_user_meta( get_current_user_id(), 'city', true );
+                        break;
+                    case $state:
+                        $value =  get_user_meta( get_current_user_id(), 'state', true );
+                        break;
+                    case $zip:
+                        $value =  get_user_meta( get_current_user_id(), 'zip', true );
+                        break;
                     default:
                 }
-            }
-        }
+           }
         return $value;
     }
 
@@ -509,7 +519,7 @@ class EED_WP_Users_SPCO extends EED_Module
                      * responses, then they will need to also filter the stop_processing param at the end of this
                      * method to return true;
                      */
-                    if (! empty($form_inputs['email'])
+                    if (! empty($form_inputs['15'])
                         && apply_filters(
                             'EED_WP_Users_SPCO__verify_user_access__perform_email_user_match_check',
                             true,
@@ -518,14 +528,14 @@ class EED_WP_Users_SPCO extends EED_Module
                         )
                     ) {
                         $user_notice = EED_WP_Users_SPCO::getUserLoginNotice(
-                            EmailAddressFactory::create($form_inputs['email'])
+                            EmailAddressFactory::create($form_inputs['15'])
                         );
                         if ($user_notice !== '') {
                             $user_notice .= EED_WP_Users_SPCO::loginAndRegisterButtonsHtml(
                                 new Url($spco->reg_step_url())
                             );
                             $stop_processing     = true;
-                            $field_input_error[] = 'ee_reg_qstn-' . $registration->ID() . '-email';
+                            $field_input_error[] = 'ee_reg_qstn-' . $registration->ID() . '-15';
                             break 2;
                         }
                     }
@@ -726,8 +736,7 @@ class EED_WP_Users_SPCO extends EED_Module
     public static function maybe_sync_existing_attendee(
         $existing_attendee,
         EE_Registration $registration,
-        $attendee_data
-    ) {
+        $attendee_data) {
         if (! is_user_logged_in() || (is_user_logged_in() && ! $registration->is_primary_registrant())) {
             return $existing_attendee;
         }
@@ -799,14 +808,51 @@ class EED_WP_Users_SPCO extends EED_Module
     {
         $user_created = false;
         $att_id       = '';
+        $parentEmail = '';
+        $parentFirstName = '';
+        $parentLastName = '';
+        $parentAddress = '';
+        $parentAddress2 = '';
+        $phone = '';
+        $city = '';
+        $state = '';
+        $zip = '';
+        $country = '';
         // use spco to get registrations from the
         $registrations = self::_get_registrations($spco);
         foreach ($registrations as $registration) {
             // is this the primary registrant?  If not, continue
-            if (! $registration->is_primary_registrant()) {
-                continue;
+            // if (! $registration->is_primary_registrant()) {
+            //     continue;
+            // }
+            //ALPHASTAR
+
+            foreach ($registration->answers() as $key => $value) {
+                $key;
+                if ($value->question()->admin_label() == "Parent's Email Address") {
+                    $parentEmail = $value->value();
+                }  
+                if ($value->question()->admin_label() == "Parent's First Name") {
+                    $parentFirstName = $value->value();
+                }
+                if ($value->question()->admin_label() == "Parent's Last Name") {
+                    $parentLastName = $value->value();
+                }      
+                
+                if ($value->question()->admin_label() == "Parent's Phone Number") {
+                    $phone = $value->value();
+                }
             }
+
             $attendee = $registration->attendee();
+           
+            $parentAddress = $attendee->address();
+            $parentAddress2 = $attendee->address2();
+            $country = $attendee->country();
+            $state = $attendee->state_ID();
+            $city = $attendee->city();
+            $zip = $attendee->zip();                      
+
             if (! $attendee instanceof EE_Attendee) {
                 // should always be an attendee, but if not we continue just to prevent errors.
                 continue;
@@ -817,14 +863,15 @@ class EED_WP_Users_SPCO extends EED_Module
                 $user = get_userdata(get_current_user_id());
             } else {
                 // is there already a user for the given attendee?
-                $user = get_user_by('email', $attendee->email());
+                $user = get_user_by('email', $parentEmail);
                 // does this user have the same att_id as the given att?
                 // If NOT, then we do NOT update because it's possible there was a family member
                 // or something sharing the same email address but is a different attendee record.
-                $att_id = $user instanceof WP_User ? get_user_option('EE_Attendee_ID', $user->ID) : $att_id;
-                if (! empty($att_id) && $att_id !== $attendee->ID()) {
-                    return;
-                }
+                //ALPHASTAR
+                // $att_id = $user instanceof WP_User ? get_user_option('EE_Attendee_ID', $user->ID) : $att_id;
+                // if (! empty($att_id) && $att_id !== $attendee->ID()) {
+                //     return;
+                // }
             }
             $event = $registration->event();
             // no existing user? then we'll create the user from the date in the attendee form.
@@ -837,14 +884,9 @@ class EED_WP_Users_SPCO extends EED_Module
                 // remove our action for creating contacts on creating user because we don't want to loop!
                 remove_action('user_register', array('EED_WP_Users_Admin', 'sync_with_contact'));
                 $user_id      = wp_create_user(
-                    apply_filters(
-                        'FHEE__EED_WP_Users_SPCO__process_wpuser_for_attendee__username',
-                        $attendee->email(),
-                        $password,
-                        $registration
-                    ),
+                    $parentEmail,
                     $password,
-                    $attendee->email()
+                    $parentEmail
                 );
                 $user_created = true;
                 if ($user_id instanceof WP_Error) {
@@ -861,7 +903,7 @@ class EED_WP_Users_SPCO extends EED_Module
                         $attendee,
                         $registration
                     )
-                );
+                );                
             }
             // only do the below if syncing is enabled.
             if ($user_created || EE_Registry::instance()->CFG->addons->user_integration->sync_user_with_contact) {
@@ -870,12 +912,20 @@ class EED_WP_Users_SPCO extends EED_Module
                 wp_update_user(
                     array(
                         'ID'           => $user->ID,
-                        'nickname'     => $attendee->fname(),
-                        'display_name' => $attendee->full_name(),
-                        'first_name'   => $attendee->fname(),
-                        'last_name'    => $attendee->lname(),
+                        'nickname'     => $parentFirstName,
+                        'display_name' => $parentFirstName. " " . $parentLastName,
+                        'first_name'   => $parentFirstName,
+                        'last_name'    => $parentLastName
                     )
                 );
+
+                update_usermeta( $user->ID, 'paddress', $parentAddress );
+                update_usermeta( $user->ID, 'psecondaddress', $parentAddress2 );
+                update_usermeta( $user->ID, 'phone', $phone );
+                update_usermeta( $user->ID, 'city', $city );
+                update_usermeta( $user->ID, 'country', $country );
+                update_usermeta( $user->ID, 'zip', $zip );
+                update_usermeta( $user->ID, 'state', $state );
             }
             // if user created then send notification and attach attendee to user
             if ($user_created) {
@@ -888,7 +938,7 @@ class EED_WP_Users_SPCO extends EED_Module
                 );
                 // set user role
                 $user->set_role(EE_WPUsers::default_user_create_role($event));
-                update_user_option($user->ID, 'EE_Attendee_ID', $attendee->ID());
+                update_user_option($user->ID, 'EE_Attendee_ID-'.$attendee->ID(), $attendee->ID());
             } else {
                 do_action(
                     'AHEE__EED_WP_Users_SPCO__process_wpuser_for_attendee__user_user_updated',
@@ -899,9 +949,9 @@ class EED_WP_Users_SPCO extends EED_Module
             }
             // failsafe just in case this is a logged in user
             // not created by this system that has never had an attendee record.
-            $att_id = empty($att_id) ? get_user_option('EE_Attendee_ID', $user->ID) : $att_id;
+            $att_id = empty($att_id) ? get_user_option('EE_Attendee_ID-'.$attendee->ID(), $user->ID) : $att_id;
             if (empty($att_id) && EED_WP_Users_SPCO::_can_attach_user_to_attendee($attendee, $user)) {
-                update_user_option($user->ID, 'EE_Attendee_ID', $attendee->ID());
+                update_user_option($user->ID, 'EE_Attendee_ID-'.$attendee->ID(), $attendee->ID());
             }
         } //end registrations loop
     }
@@ -991,6 +1041,36 @@ class EED_WP_Users_SPCO extends EED_Module
      * @throws InvalidDataTypeException
      * @throws InvalidInterfaceException
      */
+    public static function get_attendees_for_user($user_or_id)
+    {
+        global $wpdb;
+        $table = $wpdb->prefix . "usermeta";
+        $user_id  = $user_or_id instanceof WP_User ? $user_or_id->ID : (int) $user_or_id;
+        $query = "SELECT meta_value FROM `$table` WHERE user_id = ".$user_id. " AND meta_key LIKE '%EE_Attendee_ID%'";
+
+        $attIDS = $wpdb->get_results($query, 'ARRAY_A');
+        $attendees = null;
+
+        foreach ($attIDS as $index => $attID) {
+            $attendee = null;
+            if ($attID) {
+                $attendee = EEM_Attendee::instance()->get_one_by_ID($attID['meta_value']);
+                $attendees[] = $attendee instanceof EE_Attendee ? $attendee : null;
+            }
+        }
+        return $attendees;
+    }
+
+    /**
+     * Returns the EE_Attendee object attached to the given wp user.
+     *
+     * @param mixed WP_User | int $user_or_id can be WP_User or the user_id.
+     * @return EE_Attendee|null
+     * @throws EE_Error
+     * @throws InvalidArgumentException
+     * @throws InvalidDataTypeException
+     * @throws InvalidInterfaceException
+     */
     public static function get_attendee_for_user($user_or_id)
     {
         $user_id  = $user_or_id instanceof WP_User ? $user_or_id->ID : (int) $user_or_id;
@@ -1002,7 +1082,6 @@ class EED_WP_Users_SPCO extends EED_Module
         }
         return $attendee;
     }
-
 
     /**
      * Callback for wp_footer.

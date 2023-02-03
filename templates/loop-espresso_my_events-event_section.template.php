@@ -14,8 +14,10 @@
  * @type    string     $path_to_template   The full path to this template
  * @type    int        $page               What the current page is (for the paging html).
  * @type    string     $with_wrapper       Whether to include the wrapper containers or not.
- * @type    int        $att_id             Attendee ID all the displayed data belongs to.
+ * @type    int        $attr_id             Attendee ID all the displayed data belongs to.
  */
+foreach ($objects as $object) 
+    $object_count = $object_count + $object['object_count'];
 $url             = EEH_URL::current_url();
 $pagination_html = EEH_Template::get_paging_html(
     $object_count,
@@ -31,79 +33,90 @@ $pagination_html = EEH_Template::get_paging_html(
 );
 ?>
 <?php
-if ($with_wrapper) : ?>
-    <div class="espresso-my-events <?php echo $template_slug; ?>_container">
-    <?php do_action('AHEE__loop-espresso_my_events__before', $object_type, $objects, $template_slug, $att_id); ?>
-    <h3><?php echo $your_events_title; ?></h3>
-    <div class="espresso-my-events-inner-content">
+if($object_count > 0): ?>
+<div class="espresso-my-events <?php echo $template_slug; ?>_container">
+<h3><?php echo $your_events_title; ?></h3>
+<div class="espresso-my-events-inner-content">
+<?php endif;
+
+foreach ($objects as $object) :
+
+if ($with_wrapper) : ?>   
+    <?php do_action('AHEE__loop-espresso_my_events__before', $object_type, $object['objects'], $template_slug,  $object['att_id']); ?>
+    
 <?php
 endif;
 // $with_wrapper check ?>
 <?php
-if ($objects && reset($objects) instanceof EE_Event) : ?>
+
+if ($object) : 
+
+    $attendee = EEM_Attendee::instance()->get_one_by_ID($object['att_id']);
+?>
+    <span style="font-family: mathone;color: #101D51; font-weight:normal; font-size:18px;"><?php echo  $attendee->full_name()?> </span> <br>
+    <div class="course_table_list">
     <table class="espresso-my-events-table <?php echo $template_slug; ?>_table">
-        <thead>
+        <thead class="espresso-table-header-row">
         <tr>
-            <th scope="col" class="espresso-my-events-event-status ee-status-strip">
-            </th>
-            <th scope="col" class="espresso-my-events-event-th">
-                <?php echo apply_filters(
+            <td scope="col" class="espresso-my-events-event-th">
+               <span class="self"> <?php echo apply_filters(
                     'FHEE__loop-espresso_my_events__table_header_event',
                     esc_html__('Title', 'event_espresso'),
                     $object_type,
-                    $objects,
+                    $object['objects'],
                     $template_slug,
-                    $att_id
-                ); ?>
-            </th>
-            <th scope="col" class="espresso-my-events-location-th">
-                <?php echo apply_filters(
-                    'FHEE__loop-espresso_my_events__location_table_header',
-                    esc_html__('Location', 'event_espresso'),
-                    $object_type,
-                    $objects,
-                    $template_slug,
-                    $att_id
-                ); ?>
-            </th>
-            <th scope="col" class="espresso-my-events-datetime-range-th">
-                <?php echo apply_filters(
+                    $object['att_id']
+                ); ?> </span>
+            </td>
+            <td scope="col" class="espresso-my-events-location-th">
+                <span class="self">  <?php echo apply_filters(
+                        'FHEE__loop-espresso_my_events__location_table_header',
+                        esc_html__('Location', 'event_espresso'),
+                        $object_type,
+                        $object['objects'],
+                        $template_slug,
+                        $object['att_id']
+                    ); ?>
+                </td></span>
+            <td scope="col" class="espresso-my-events-datetime-range-th">
+            <span class="self"> <?php echo apply_filters(
                     'FHEE__loop-espresso_my_events__datetime_range_table_header',
                     esc_html__('When', 'event_espresso'),
                     $object_type,
-                    $objects,
+                    $object['objects'],
                     $template_slug,
-                    $att_id
-                ); ?>
-            </th>
-            <th scope="col" class="espresso-my-events-tickets-num-th">
-                <?php echo apply_filters(
+                    $object['att_id']
+                ); ?></span>
+            </td>
+            <td scope="col" class="espresso-my-events-tickets-num-th">
+            <span class="self"> <?php echo apply_filters(
                     'FHEE__loop-espresso_my_events__tickets_num_table_header',
-                    esc_html__('# Tickets', 'event_espresso'),
+                    esc_html__('Tickets', 'event_espresso'),
                     $object_type,
-                    $objects,
+                    $object['objects'],
                     $template_slug,
-                    $att_id
-                ); ?>
-            </th>
-            <th scope="col" class="espresso-my-events-actions-th">
-                <?php echo apply_filters(
+                    $object['att_id']
+                ); echo "&nbsp;"; ?></span>
+            </td>
+            <td scope="col" class="espresso-my-events-actions-th">
+            <span class="self">  <?php echo apply_filters(
                     'FHEE__loop-espresso_my_events__actions_table_header',
                     esc_html__('Actions', 'event_espresso'),
                     $object_type,
-                    $objects,
+                    $object['objects'],
                     $template_slug,
-                    $att_id
-                ); ?>
-            </th>
+                    $object['att_id']
+                ); ?></span>
+            </td>
         </tr>
         </thead>
         <tbody>
-        <?php foreach ($objects as $object) :
-            if (! $object instanceof EE_Event) {
+        <?php foreach ($object['objects'] as $objectitem) :
+            if (! $objectitem instanceof EE_Event) {
                 continue;
             }
-            $template_args = array('event'              => $object,
+            $att_id = $object['att_id'];
+            $template_args = array('event'              => $objectitem,
                                    'your_tickets_title' => $your_tickets_title,
                                    'att_id'             => $att_id,
             );
@@ -113,7 +126,22 @@ if ($objects && reset($objects) instanceof EE_Event) : ?>
         <?php endforeach; ?>
         </tbody>
     </table>
-    <div class="espresso-my-events-footer">
+    </div>
+<?php else : ?>
+    <div class="no-events-container">
+        <p>
+            <?php echo apply_filters(
+                'FHEE__loop-espresso_my_events__no_events_message',
+                esc_html__('You have no events yet', 'event_espresso'),
+                $object_type,
+                $object,
+                $template_slug,
+                $object['att_id']
+            ); ?>
+        </p>
+    </div>
+<?php endif; endforeach;?>
+<div class="espresso-my-events-footer">
         <div class="espresso-my-events-pagination-container <?php echo $template_slug; ?>-pagination">
             <span class="spinner"></span>
             <?php echo $pagination_html; ?>
@@ -127,24 +155,10 @@ if ($objects && reset($objects) instanceof EE_Event) : ?>
             false
         ); ?>
     </div>
-<?php else : ?>
-    <div class="no-events-container">
-        <p>
-            <?php echo apply_filters(
-                'FHEE__loop-espresso_my_events__no_events_message',
-                esc_html__('You have no events yet', 'event_espresso'),
-                $object_type,
-                $objects,
-                $template_slug,
-                $att_id
-            ); ?>
-        </p>
-    </div>
-<?php endif; ?>
 <?php
 if ($with_wrapper) : ?>
     </div>
-    <?php do_action('AHEE__loop-espresso_my_events__after', $object_type, $objects, $template_slug, $att_id); ?>
+    <?php do_action('AHEE__loop-espresso_my_events__after', $object_type, $object['objects'], $template_slug, $object['att_id']); ?>
     </div>
 <?php
 endif;

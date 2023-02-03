@@ -99,11 +99,11 @@
 }
 
 /*approved registration, active event*/
-.espresso-my-events-table tr td.reg-status-RAP, .espresso-my-events-table tr td.event-status-DTA {
+.espresso-my-events-table tr td.reg-status-RAP, .espresso-my-events-table tr td.event-status-RAP {
     color: #70CC50;
 }
 
-.ee-status-RAP, .ee-status-DTA {
+.ee-status-RAP, .ee-status-RAP {
     background-color: #70CC50;
 }
 

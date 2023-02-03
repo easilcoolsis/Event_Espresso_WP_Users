@@ -76,9 +76,6 @@ class EE_WPUsers extends EE_Addon
         $this->register_dependencies();
     }
 
-
-
-
     protected function register_dependencies()
     {
         EE_Dependency_Map::register_dependencies(
@@ -137,7 +134,7 @@ class EE_WPUsers extends EE_Addon
     public static function get_attendee_user($att_id)
     {
         global $wpdb;
-        $key     = $wpdb->get_blog_prefix() . 'EE_Attendee_ID';
+        $key     = $wpdb->get_blog_prefix() . 'EE_Attendee_ID-'.$att_id;
         $query   = "SELECT user_id FROM $wpdb->usermeta WHERE meta_key = '$key' AND meta_value = '%d'";
         $user_id = $wpdb->get_var($wpdb->prepare($query, (int) $att_id));
         return $user_id ? (int) $user_id : null;

@@ -53,7 +53,7 @@ class EE_SPCO_Reg_Step_WP_User_Login extends EE_SPCO_Reg_Step
             )
             : EE_Registry::instance()->CFG->addons->user_integration->registration_page;
         $instructions = get_option('users_can_register')
-            ? sprintf(__('The event you have selected requires logging in before you can register. You can %sregister for an account here%s if you don\'t have a login.', 'event_espresso'), '<a href="' . $registration_url . '">', '</a>')
+            ? sprintf(__('The event you have selected requires logging in before you can register. You can %sregister for an account here%s if you don\'t have a login.', 'event_espresso'), '<a style="color:#007bff" href="' . $registration_url . '">', '</a>')
             : __('The event you have selected requires logging in before you can register.', 'event_espresso');
         $this->set_instructions($instructions);
     }
@@ -146,8 +146,6 @@ class EE_SPCO_Reg_Step_WP_User_Login extends EE_SPCO_Reg_Step
             return false;
         }
 
-
-
         $login_data = array(
             'user_login' => $valid_data['eea_wp_user_login_name'],
             'login_pass' => $valid_data['eea_wp_user_password']
@@ -182,9 +180,6 @@ class EE_SPCO_Reg_Step_WP_User_Login extends EE_SPCO_Reg_Step
             return true;
         }
     }
-
-
-
 
     public function update_reg_step()
     {
