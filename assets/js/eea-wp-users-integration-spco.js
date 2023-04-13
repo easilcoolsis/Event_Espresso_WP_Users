@@ -224,6 +224,14 @@ jQuery(document).ready( function($) {
 	});
 
 
+	SPCO.main_container.on( 'click', '#spco-have-account', function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		$("#ee_user-login-input-dv").css("display", "unset");
+        $("#ee_user-password-input-dv").css("display", "unset");
+        $("#spco-go-to-step-attendee_information-submit").css("display", "unset");
+	});
+
 	SPCO.main_container.on( 'click', '.js-toggle-followup-notification', function(e) {
 		e.preventDefault();
 		var $attentionContainer = $('.ee-attention-notification-form');

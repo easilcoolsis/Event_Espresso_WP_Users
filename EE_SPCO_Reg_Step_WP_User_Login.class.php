@@ -52,8 +52,14 @@ class EE_SPCO_Reg_Step_WP_User_Login extends EE_SPCO_Reg_Step
                 )
             )
             : EE_Registry::instance()->CFG->addons->user_integration->registration_page;
-        $instructions = get_option('users_can_register')
-            ? sprintf(__('The event you have selected requires logging in before you can register. You can %sregister for an account here (This account is your registration account; not the course/LMS account. You will see your transactions in this account.)%s if you don\'t have a login.', 'event_espresso'), '<a style="color:#007bff" href="' . $registration_url . '">', '</a>')
+           
+            $instructions = get_option('users_can_register')
+            ? sprintf(__('The event you selected requires logging in before you can register. You can register for an account using the Sign Up button below. 
+                         (This account is your registration account; not the course/LMS account. You will see your transactions in this account). %s %s %s %s', 'event_espresso'), '<br>',
+             '<div class="spco-whats-next-buttons">
+                <a id="spco-signup-button" href="' . $registration_url . '" class="button" style="width: auto;padding: 20px 60px;float: left;margin-bottom: calc(30px / 3);">Sign Up</a>
+                <input id="spco-have-account" type="submit" class="button" style="width: auto;padding: 22px 60px;float: right;font-size:1.4rem;margin-bottom: calc(30px / 3);" value="Sign In" >
+              </div>', '<br>', '<br>')
             : __('The event you have selected requires logging in before you can register.', 'event_espresso');
         $this->set_instructions($instructions);
     }

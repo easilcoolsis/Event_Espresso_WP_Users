@@ -89,5 +89,4 @@ jQuery(document).ready( function($) {
         detailsrow.toggle( 1000 );
         summaryrow.toggle();
     });
-
 });
