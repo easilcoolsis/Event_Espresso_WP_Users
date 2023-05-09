@@ -61,7 +61,7 @@ if ($object) :
             <td scope="col" class="espresso-my-events-event-th">
                <span class="self"> <?php echo apply_filters(
                     'FHEE__loop-espresso_my_events__table_header_event',
-                    esc_html__('Title', 'event_espresso'),
+                    esc_html__('Course Name', 'event_espresso'),
                     $object_type,
                     $object['objects'],
                     $template_slug,
@@ -81,7 +81,7 @@ if ($object) :
             <td scope="col" class="espresso-my-events-datetime-range-th">
             <span class="self"> <?php echo apply_filters(
                     'FHEE__loop-espresso_my_events__datetime_range_table_header',
-                    esc_html__('When', 'event_espresso'),
+                    esc_html__('Start-End Date', 'event_espresso'),
                     $object_type,
                     $object['objects'],
                     $template_slug,
@@ -91,7 +91,7 @@ if ($object) :
             <td scope="col" class="espresso-my-events-tickets-num-th">
             <span class="self"> <?php echo apply_filters(
                     'FHEE__loop-espresso_my_events__tickets_num_table_header',
-                    esc_html__('Tickets', 'event_espresso'),
+                    esc_html__('# of registrations', 'event_espresso'),
                     $object_type,
                     $object['objects'],
                     $template_slug,
