@@ -88,6 +88,17 @@ if ($object) :
                     $object['att_id']
                 ); ?></span>
             </td>
+
+            <td scope="col" class="espresso-my-events-datetime-range-th">
+            <span class="self"> <?php echo apply_filters(
+                    'FHEE__loop-espresso_my_events__datetime_range_table_header',
+                    esc_html__('Days and Times (Pacific Time)', 'event_espresso'),
+                    $object_type,
+                    $object['objects'],
+                    $template_slug,
+                    $object['att_id']
+                ); ?></span>
+            </td>
             <td scope="col" class="espresso-my-events-tickets-num-th">
             <span class="self"> <?php echo apply_filters(
                     'FHEE__loop-espresso_my_events__tickets_num_table_header',

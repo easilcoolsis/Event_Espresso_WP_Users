@@ -846,12 +846,15 @@ class EED_WP_Users_SPCO extends EED_Module
 
             $attendee = $registration->attendee();
            
-            $parentAddress = $attendee->address();
-            $parentAddress2 = $attendee->address2();
-            $country = $attendee->country();
-            $state = $attendee->state_ID();
-            $city = $attendee->city();
-            $zip = $attendee->zip();                      
+            if($attendee->address() && $attendee->address() != "")
+            {
+                $parentAddress = $attendee->address();
+                $parentAddress2 = $attendee->address2();
+                $country = $attendee->country();
+                $state = $attendee->state_ID();
+                $city = $attendee->city();
+                $zip = $attendee->zip();                      
+            }
 
             if (! $attendee instanceof EE_Attendee) {
                 // should always be an attendee, but if not we continue just to prevent errors.
