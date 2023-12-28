@@ -12,9 +12,17 @@ $ticket = $registration->ticket();
     <td>
         <?php echo $ticket instanceof EE_Ticket ? $ticket->name() : ''; ?>
     </td>
-    <td>
-        <?php echo $ticket instanceof EE_Ticket ? $ticket->date_range() : ''; ?>
-    </td>
+    <?php
+    //     $category = get_post_meta($registration->event_ID(), 'category', true);
+    //     $duration = ' + 1 years';
+    //      $duration = ' + 2 years';        
+    //    if($category === 'self')
+    //      $date_format = get_option( 'date_format' );
+    //     $startdate = strtotime($registration->date());
+    //     $enddate = strtotime($registration->date(). $duration);
+    //     echo date_i18n(  $date_format , $startdate ) . "-" . date_i18n(  $date_format , $enddate );        
+    //     ?>
+    
     <td>
         <?php
         $actions = array();

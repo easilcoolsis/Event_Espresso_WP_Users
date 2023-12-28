@@ -195,6 +195,7 @@ class EED_WP_Users_SPCO extends EED_Module
             add_action('register_new_user', array('EED_WP_Users_SPCO', 'auto_login_registered_user'));
             add_action('register_form', array('EED_WP_Users_SPCO', 'add_auto_login_parameter'));
         }
+	
     }
 
 
@@ -846,12 +847,15 @@ class EED_WP_Users_SPCO extends EED_Module
 
             $attendee = $registration->attendee();
            
-            $parentAddress = $attendee->address();
-            $parentAddress2 = $attendee->address2();
-            $country = $attendee->country();
-            $state = $attendee->state_ID();
-            $city = $attendee->city();
-            $zip = $attendee->zip();                      
+            if($attendee->address() && $attendee->address() != "")
+            {
+                $parentAddress = $attendee->address();
+                $parentAddress2 = $attendee->address2();
+                $country = $attendee->country();
+                $state = $attendee->state_ID();
+                $city = $attendee->city();
+                $zip = $attendee->zip();                      
+            }
 
             if (! $attendee instanceof EE_Attendee) {
                 // should always be an attendee, but if not we continue just to prevent errors.
@@ -1220,6 +1224,7 @@ class EED_WP_Users_SPCO extends EED_Module
                     $user->display_name
                 )
             );
+	
             $return_data = array(
                 'wp_user_response' => array(
                     'require_login'          => false,

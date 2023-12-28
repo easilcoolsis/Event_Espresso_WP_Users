@@ -58,6 +58,8 @@ jQuery(document).ready( function($) {
 
 				return;
 			}
+			
+			location.reload();
 			return;
 		},
 
@@ -189,6 +191,7 @@ jQuery(document).ready( function($) {
 
 				success: function ( response ) {
 					WPUSPCO.processResponse( response );
+					location.reload();
 				},
 
 				error: function() {

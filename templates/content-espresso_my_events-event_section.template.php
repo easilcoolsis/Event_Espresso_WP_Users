@@ -33,8 +33,32 @@ $registrations = $event->get_many_related('Registration', array(array('ATT_ID' =
         ?>
     </td>
     <td>
-        <?php espresso_event_date_range('', '', '', '', $event->ID()); ?>
+        <?php 
+        	$category = get_post_meta($event->ID(), 'category', true);
+            if($category === 'self')
+              echo "2 years from enrollment";
+                
+            else {  
+               $days = explode(' - ', espresso_event_date_range('', '', '', '', $event->ID(), false));
+               $daysrange = '';
+               foreach($days as  $key =>$day)
+               {
+                $daysrange = $daysrange . substr($day, 0, 10);
+                if($key === 0)
+                  $daysrange = $daysrange . '-';
+               }
+               echo $daysrange;
+            }
+               ?>
     </td>
+    <td>
+    <?php 
+      $days_and_times = get_post_meta($event->ID(), 'days_times', true);
+       echo $days_and_times;
+      ?>
+
+    </td>
+
     <td>
         <?php echo count($registrations); ?>
     </td>
@@ -60,7 +84,6 @@ $registrations = $event->get_many_related('Registration', array(array('ATT_ID' =
             </section>
             
             <section class="ee-my-events-event-section-tickets-list-table-container">
-                <h3><?php echo $your_tickets_title; ?></h3>
                 <?php if ($registrations) : ?>
                     <table class="espresso-my-events-table simple-list-table">
                         <thead>
@@ -70,17 +93,10 @@ $registrations = $event->get_many_related('Registration', array(array('ATT_ID' =
                             <th scope="col" class="espresso-my-events-ticket-th">
                                 <?php echo apply_filters(
                                     'FHEE__content-espresso_my_events__table_header_ticket',
-                                    esc_html__('Ticket', 'event_espresso'),
+                                    esc_html__('Registration', 'event_espresso'),
                                     $event
                                 ); ?>
-                            </th>
-                            <th scope="col" class="espresso-my-events-datetimes-th">
-                                <?php echo apply_filters(
-                                    'FHEE__content-espresso_my_events__table_header_datetimes',
-                                    esc_html__('Dates & Times', 'event_espresso'),
-                                    $event
-                                ); ?>
-                            </th>
+                            </th>               
                             <th scope="col" class="espresso-my-events-actions-th">
                                 <?php echo apply_filters(
                                     'FHEE__content-espresso_my_events__actions_table_header',
