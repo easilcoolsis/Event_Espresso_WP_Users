@@ -923,13 +923,13 @@ class EED_WP_Users_SPCO extends EED_Module
                     )
                 );
 
-                update_usermeta( $user->ID, 'paddress', $parentAddress );
-                update_usermeta( $user->ID, 'psecondaddress', $parentAddress2 );
-                update_usermeta( $user->ID, 'phone', $phone );
-                update_usermeta( $user->ID, 'city', $city );
-                update_usermeta( $user->ID, 'country', $country );
-                update_usermeta( $user->ID, 'zip', $zip );
-                update_usermeta( $user->ID, 'state', $state );
+                update_user_meta( $user->ID, 'paddress', $parentAddress );
+                update_user_meta( $user->ID, 'psecondaddress', $parentAddress2 );
+                update_user_meta( $user->ID, 'phone', $phone );
+                update_user_meta( $user->ID, 'city', $city );
+                update_user_meta( $user->ID, 'country', $country );
+                update_user_meta( $user->ID, 'zip', $zip );
+                update_user_meta( $user->ID, 'state', $state );
             }
             // if user created then send notification and attach attendee to user
             if ($user_created) {

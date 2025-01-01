@@ -5,38 +5,12 @@ if (! defined('ABSPATH')) {
 }
 /*
   Plugin Name:  AlphaStar Parent Users 
-  Plugin URI:  http://www.eventespresso.com
   Description: This adds the WP users integration.
-  Version: 2.0.19.p
-  Author: AlphaStar
-  Author URI: http://www.eventespresso.com
-  License: GPLv2
-  TextDomain: event_espresso
-  Copyright (c) 2008-2014 Event Espresso  All Rights Reserved.
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+  Version: 2.1.3.p
+  Author: AlphaStar Academy
  */
 
-/**
- * AlphaStar Parent Users for Event Espresso
- *
- * @since        1.0.0
- * @package      EE WPUsers
- *
- */
-define('EE_WPUSERS_VERSION', '2.0.19.p');
+define('EE_WPUSERS_VERSION', '2.1.3.p');
 define('EE_WPUSERS_MIN_CORE_VERSION_REQUIRED', '4.8.21.rc.005');
 define('EE_WPUSERS_PLUGIN_FILE', __FILE__);
 
