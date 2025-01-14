@@ -54,6 +54,7 @@ if ($object) :
     $attendee = EEM_Attendee::instance()->get_one_by_ID($object['att_id']);
 ?>
     <span style="font-family: mathone;color: #101D51; font-weight:normal; font-size:18px;"><?php echo  $attendee->full_name()?> </span> <br>
+
     <div class="course_table_list">
     <table class="espresso-my-events-table <?php echo $template_slug; ?>_table">
         <thead class="espresso-table-header-row">
@@ -77,7 +78,8 @@ if ($object) :
                         $template_slug,
                         $object['att_id']
                     ); ?>
-                </td></span>
+              </span>
+			</td>
             <td scope="col" class="espresso-my-events-datetime-range-th">
             <span class="self"> <?php echo apply_filters(
                     'FHEE__loop-espresso_my_events__datetime_range_table_header',
@@ -121,8 +123,12 @@ if ($object) :
             </td>
         </tr>
         </thead>
-        <tbody>
-        <?php foreach ($object['objects'] as $objectitem) :
+		<?php endif;?>
+
+         <tbody>
+		<?php	if ($object && count($object['objects']) > 0) { 
+  
+           foreach ($object['objects'] as $objectitem) {
             if (! $objectitem instanceof EE_Event) {
                 continue;
             }
@@ -133,25 +139,28 @@ if ($object) :
             );
             $template      = 'content-espresso_my_events-event_section.template.php';
             EEH_Template::locate_template($template, $template_args, true, false);
-            ?>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
-    </div>
-<?php else : ?>
-    <div class="no-events-container">
-        <p>
+           }
+          }
+		?> 	 
+		
+        <?php  if ($object && count($object['objects']) == 0) { ?>
+         <tr>
+			 <td>
             <?php echo apply_filters(
                 'FHEE__loop-espresso_my_events__no_events_message',
-                esc_html__('You have no events yet', 'event_espresso'),
+                esc_html__('No registration found', 'event_espresso'),
                 $object_type,
                 $object,
                 $template_slug,
                 $object['att_id']
             ); ?>
-        </p>
+       </td> <td></td><td></td><td></td><td></td><td></td></tr>
+		 <?php  }?>
+      </tbody>
+    </table>
     </div>
-<?php endif; endforeach;?>
+  
+<?php endforeach;?>
 <div class="espresso-my-events-footer">
         <div class="espresso-my-events-pagination-container <?php echo $template_slug; ?>-pagination">
             <span class="spinner"></span>
