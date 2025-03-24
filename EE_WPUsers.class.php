@@ -273,4 +273,130 @@ class EE_WPUsers extends EE_Addon
         $settings[ $key ] = $value;
         return $event->update_post_meta('ee_wpuser_integration_settings', $settings);
     }
+
+    public static function get_credit_total_balance($userId)
+    {
+         global $wpdb;
+         $tableName= $wpdb->prefix."asa_parent_credit_history";
+ 
+ 
+         $query = "SELECT IFNULL(SUM(CASE WHEN credit_debit = 'D' THEN credit_amount ELSE credit_amount*-1 END), 0)
+                     FROM $tableName
+                 WHERE parent_user_id = $userId
+                     AND status = 1";
+ 
+         $creditBalance = $wpdb->get_var($query);
+ 
+         return $creditBalance;
+ 
+     }
+ 
+     public static function get_parent_credit_history($userId)
+     {
+          global $wpdb;
+          $tableName= $wpdb->prefix."asa_parent_credit_history";
+  
+          $query = "SELECT description, credit_debit, course_price, credit_amount, create_date  
+                      FROM $tableName
+                  WHERE parent_user_id = $userId
+                      AND status = 1
+                      order by create_date";
+  
+          $history = $wpdb->get_results($query, 'ARRAY_A');
+            
+          return $history;
+      }
+     public static function get_applied_credit_amount($userId, $txn_id)
+     {
+          global $wpdb;
+          $tableName= $wpdb->prefix."asa_parent_credit_history";
+  
+          $query = "SELECT credit_amount 
+                      FROM $tableName
+                  WHERE parent_user_id = $userId
+                      AND transaction_id = $txn_id";
+  
+          $appliedCreditAmount = $wpdb->get_var($query);
+  
+          return $appliedCreditAmount;
+      }
+      
+      public static function update_parent_credit_history($userId, $txn_id)
+      {
+           date_default_timezone_set('America/Los_Angeles');
+           global $wpdb;
+           $tableName= $wpdb->prefix."asa_parent_credit_history";
+           $updateDate = date("y-m-d H:i:s");
+           
+           $query = "UPDATE $tableName
+                      SET STATUS = 1,
+                      UPDATE_DATE = '$updateDate',
+                      UPDATE_USER_ID = $userId
+                   WHERE parent_user_id = $userId
+                       AND transaction_id = $txn_id
+                       AND status = 0";
+   
+           $appliedCreditAmount = $wpdb->get_var($query);
+           date_default_timezone_set('UTC');    
+           return $appliedCreditAmount;
+       }
+
+       public static function delete_parent_credit_history($userId, $txn_id)
+       {
+            global $wpdb;
+            $tableName= $wpdb->prefix."asa_parent_credit_history";
+            
+            $query = "DELETE FROM $tableName
+                    WHERE parent_user_id = $userId
+                        AND transaction_id = $txn_id
+                        AND status = 0";
+    
+            $results = $wpdb->get_results($query); 
+            return $results;
+        }
+
+    public static  function add_credit_history(
+        $admin,
+        $description, 
+        $credit_amount, 
+        $parent_user_id, 
+        $status, 
+        $event_id, 
+        $reg_id, 
+        $credit_debit, 
+        $course_price,
+        $txn_id)
+ {
+    if($credit_debit == 'C' &&  $admin == false)
+    {
+        $appliedCreditAmount = self::get_applied_credit_amount( $parent_user_id, $txn_id );
+        if($appliedCreditAmount > 0)
+        {
+            return;
+        }
+    }
+     date_default_timezone_set('America/Los_Angeles');
+           
+     global $wpdb;
+     $tableName= $wpdb->prefix."asa_parent_credit_history";
+     $current_user_id = get_current_user_id();
+ 
+     $wpdb->insert(
+             $tableName,
+             array(
+                 'parent_user_id' => $parent_user_id,
+                 'description' => $description,
+                 'credit_debit' => $credit_debit,
+                 'credit_amount' => abs($credit_amount),
+                 'create_date' => date("y-m-d H:i:s") ,
+                 'create_user_id' => $current_user_id,
+                 'event_id' => $event_id,
+                 'status' => $status,
+                 'registration_id' => $reg_id,
+                 'course_price' => $course_price,
+                 'transaction_id'=> $txn_id
+             )
+         );
+    date_default_timezone_set('UTC');     
+ }
 }

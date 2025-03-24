@@ -98,9 +98,6 @@ class EE_SPCO_Reg_Step_WP_User_Login extends EE_SPCO_Reg_Step
         return true;
     }
 
-
-
-
     public function generate_reg_form()
     {
         EE_Registry::instance()->load_helper('HTML');
@@ -141,8 +138,6 @@ class EE_SPCO_Reg_Step_WP_User_Login extends EE_SPCO_Reg_Step
                 )
         );
     }
-
-
 
     public function process_reg_step()
     {

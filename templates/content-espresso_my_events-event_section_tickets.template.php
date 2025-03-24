@@ -6,22 +6,16 @@
  * @type $registration EE_Registration registration object
  */
 $ticket = $registration->ticket();
+$reg_statuses = EEM_Registration::reg_status_array(array(), true);
 ?>
 <tr>
     <td class="ee-status-strip reg-status-<?php echo $registration->status_ID(); ?>"></td>
-    <td>
+    <td class="reg-status-<?php echo $registration->status_ID(); ?>">
+        <?php echo $reg_statuses[$registration->status_ID()]; ?>
+    </td>
+    <td >
         <?php echo $ticket instanceof EE_Ticket ? $ticket->name() : ''; ?>
     </td>
-    <?php
-    //     $category = get_post_meta($registration->event_ID(), 'category', true);
-    //     $duration = ' + 1 years';
-    //      $duration = ' + 2 years';        
-    //    if($category === 'self')
-    //      $date_format = get_option( 'date_format' );
-    //     $startdate = strtotime($registration->date());
-    //     $enddate = strtotime($registration->date(). $duration);
-    //     echo date_i18n(  $date_format , $startdate ) . "-" . date_i18n(  $date_format , $enddate );        
-    //     ?>
     
     <td>
         <?php

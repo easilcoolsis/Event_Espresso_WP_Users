@@ -55,6 +55,11 @@ class EED_WP_Users_SPCO extends EED_Module
         //     'FHEE__EE_SPCO_Reg_Step_Attendee_Information___save_registration_form_input',
         //     array( 'EED_WP_Users_SPCO', 'process_wp_user_inputs' ), 10, 5
         // );
+        add_action('wp_enqueue_scripts', array('EED_WP_Users_SPCO', 'enqueue_scripts'));
+		
+		add_filter(
+            'FHEE__EE_SPCO_Reg_Step_Payment_Options___display_payment_options__before_payment_options',
+            array('EED_WP_Users_SPCO','add_parent_credit_input') );
         add_filter(
             'FHEE__EEH_Form_Fields__generate_question_groups_html__after_question_group_questions',
             array('EED_WP_Users_SPCO', 'primary_reg_sync_messages'),
@@ -108,9 +113,58 @@ class EED_WP_Users_SPCO extends EED_Module
             array('EED_WP_Users_SPCO', 'maybe_login_notice'),
             10
         );
+   
+        add_action( 
+            'AHEE__thank_you_page_overview_template__bottom',
+            array('EED_WP_Users_SPCO','complete_parent_credit_process'), 
+            10, 3
+        );
+		
+
         EED_WP_Users_SPCO::_add_user_registration_route_hooks();
     }
 
+	public static function ticket_removed_from_cart(EE_Ticket $ticket, int $quantity, EE_Line_Item $parent_item)
+	{  
+		$user_id = get_current_user_id();
+		$cardInfo = self::get_card_info();   
+        list($first_item, $grand_total, $cart) = $cardInfo; 
+        
+		if($first_item)
+		{
+           $lineCode = 'promotion-3563';
+	       $first_parent_item = $first_item->parent();	
+		   $parent_credit_item = $first_parent_item->get_child_line_item($lineCode);
+		
+			if($parent_credit_item)
+			{
+			  $parent_credit_item->delete_child_line_item($lineCode);
+			  EE_WPUsers::delete_parent_credit_history($user_id, $first_item->transaction()->ID());
+			}
+		}
+	}
+    
+	public static function enqueue_scripts()
+    {
+        wp_register_style(
+            'eea-parent-credit',
+            EE_WPUSERS_URL . 'assets/css/eea-parent-credit.css',
+            array(),
+            EE_WPUSERS_VERSION
+        );
+
+        if (apply_filters('EED_Single_Page_Checkout__SPCO_active', false)) {
+          wp_register_script(
+            'eea-parent-credit-js',
+            EE_WPUSERS_URL . 'assets/js/eea-parent-credit.js',
+             [ 'jquery','jquery-ui-draggable'],
+            EE_WPUSERS_VERSION
+         );
+	   }
+	    wp_enqueue_script('eea-parent-credit-js');
+		  
+        wp_enqueue_style('eea-parent-credit');
+    }
 
     /**
      * All admin hooks (and ajax)
@@ -157,7 +211,20 @@ class EED_WP_Users_SPCO extends EED_Module
                 4
             );
         }
+				
+	    add_action(
+            'FHEE__EED_Multi_Event_Registration__delete_ticket__ticket_removed_from_cart',
+            array('EED_WP_Users_SPCO', 'ticket_removed_from_cart'),
+            10,
+            3
+        );
         // ajax calls
+        add_filter(
+            'FHEE__EE_SPCO_Reg_Step_Payment_Options___display_payment_options__before_payment_options',
+            array('EED_WP_Users_SPCO','add_parent_credit_input') );
+        add_action('wp_ajax_submit_parent_credit',  array('EED_WP_Users_SPCO','submit_parent_credit'));
+        add_action('wp_ajax_nopriv_submit_parent_credit', array('EED_WP_Users_SPCO','submit_parent_credit'));
+
         add_action(
             'wp_ajax_ee_process_login_form',
             array('EED_WP_Users_SPCO', 'process_login_form'),
@@ -177,10 +244,199 @@ class EED_WP_Users_SPCO extends EED_Module
             'wp_ajax_nopriv_ee_process_user_trouble_notification',
             array('EED_WP_Users_SPCO', 'send_notification_to_admin')
         );
+	
+
         EED_WP_Users_SPCO::_add_user_registration_route_hooks();
     }
 
 
+      /**
+     *    _get_payment_info
+     *
+     * @param EE_Cart $cart
+     * @return    array
+     * @throws EE_Error
+     * @throws ReflectionException
+     */
+    public function _get_payment_info(EE_Cart $cart): array
+    {
+        EEH_Autoloader::register_line_item_filter_autoloaders();
+        $line_item_filter_processor = new EE_Line_Item_Filter_Processor(
+            apply_filters(
+                'FHEE__SPCO__EE_Line_Item_Filter_Collection',
+                new EE_Line_Item_Filter_Collection()
+            ),
+            $cart->get_grand_total()
+        );
+		
+        /** @var EE_Line_Item $filtered_line_item_tree */
+        $filtered_line_item_tree = $line_item_filter_processor->process();
+        // autoload Line_Item_Display classes
+        EEH_Autoloader::register_line_item_display_autoloaders();
+		
+        // $this->checkout->line_item_filters();
+        $Line_Item_Display = new EE_Line_Item_Display('spco');
+        return [
+            'payment_info' => $Line_Item_Display->display_line_item(
+                $filtered_line_item_tree,
+                ['display_event_row' => true]
+            ),
+            'cart_total'   => $filtered_line_item_tree->total(),
+        ];
+    }
+
+	  function console_log($output, $with_script_tags = true) {
+	$js_code = 'console.log(' . json_encode($output, JSON_HEX_TAG) .
+	');';
+	if ($with_script_tags) {
+	$js_code = '<script>' . $js_code . '</script>';
+	}
+	echo $js_code;
+	}
+
+    private static function get_card_info()
+    {
+        $checkout = EE_Registry::instance()->SSN->checkout();
+        $transaction = $checkout->transaction;
+        $current_step = $checkout->current_step;
+        $cart = $current_step->checkout->cart;
+		$grand_total = $cart->get_grand_total();
+        $purchases = $grand_total->get_items();
+        $first_item = reset($purchases);
+
+        return  [$first_item, $grand_total, $cart];
+    }
+
+
+    public static function submit_parent_credit()
+    {
+        try{
+	   $user_id = get_current_user_id();
+       $parent_credit_balance = EE_WPUsers::get_credit_total_balance($user_id);
+       $JSON_response = [];
+       $return_data =[];
+       
+		if($parent_credit_balance == null || $parent_credit_balance == 0)
+		{
+          $JSON_response['errors'] = sprintf( esc_html__(
+                'You do not have any credit!',
+                'event_espresso'
+            ));
+           $JSON_response = apply_filters('FHEE__EED_Promotions__generate_JSON_response__JSON_response', $JSON_response);
+         // return encoded array
+           wp_send_json($JSON_response);
+		}
+        
+        $cardInfo = self::get_card_info();   
+        list($first_item, $grand_total, $cart) = $cardInfo;  	
+        $first_parent_item = $first_item->parent();		  
+		$price = $first_parent_item->unit_price();
+			 
+		if( $price == 0)
+		{
+			$JSON_response['errors'] = sprintf( esc_html__(
+                'Your credit is not applicaple on this transaction!',
+                'event_espresso'
+                ));
+
+			wp_send_json($JSON_response);
+			return;
+		}
+			 
+		$credit_amount = min($price, $parent_credit_balance);
+		$event_id=  $first_parent_item->OBJ_ID();
+		$event_name = $first_item->ticket()->get_event_name();
+			 
+		$sub_line_item = EE_Line_Item::new_instance(array(
+                'LIN_name'       => 'Parent Credit',
+                'LIN_desc'       => '$'.$credit_amount.' credit applied',
+                'LIN_quantity'   => 1,
+                'LIN_is_taxable' => false,
+                'LIN_total'      => -1 * $credit_amount,
+                'LIN_type'       => EEM_Line_Item::type_line_item,
+                'OBJ_type'       => EEM_Line_Item::OBJ_TYPE_PROMOTION,
+				'OBJ_ID'         => 3563 // Parent Credit Promotion ID	
+            ));
+			 
+        $sub_line_item = apply_filters(
+            'FHEE__EEH_Line_Item__create_ticket_line_item__sub_line_item',
+             $sub_line_item
+        );
+ 
+        $sub_line_item->set_unit_price(-1 * $credit_amount);
+        $first_parent_item->add_child_line_item($sub_line_item);
+			 
+        $sub_line_item->save();
+
+		foreach ($first_item->transaction()->registrations() as $registration ) {
+			if ( $registration instanceof EE_Registration ) {
+				$reg_id = $registration->ID();
+				break;
+			}
+		}
+     
+        EE_WPUsers::add_credit_history(false, $event_name , $credit_amount, $user_id, 0, $event_id,  $reg_id , 'C', $price,  $first_item->transaction()->ID());
+			
+		$grand_total->recalculate_total_including_taxes();
+
+        $cart->save_cart(false);
+
+        $return_data            = self::_get_payment_info($cart);
+        $return_data['success'] = 'Parent credit applied successfully!';
+     
+        EED_Single_Page_Checkout::update_checkout();
+
+        self::generate_JSON_response($return_data);
+      } 
+      catch (Exception $e) {
+            $JSON_response['errors'] = sprintf( esc_html__(
+            $e->getMessage()
+            ));
+
+          wp_send_json($JSON_response);
+           return;
+        }
+    }
+
+    public function generate_JSON_response(array $return_data = [])
+    {
+        $JSON_response = [];
+        // grab notices
+        $notices = EE_Error::get_notices(false);
+        // add notices to JSON response, but only if they exist
+        if (isset($notices['attention'])) {
+            $JSON_response['attention'] = $notices['attention'];
+        }
+        if (isset($notices['errors'])) {
+            $JSON_response['errors'] = $notices['errors'];
+        }
+        if (isset($notices['success'])) {
+            $JSON_response['success'] = $notices['success'];
+        }
+        if (empty($JSON_response) && empty($return_data)) {
+            $JSON_response['errors'] = sprintf(
+                esc_html__(
+                    'Sorry, but the parent credite could not be applied because the credit could not be retrieved.',
+                    'event_espresso'
+                ),
+                strtolower($this->config()->label->singular),
+                '<br />'
+            );
+        }
+        // add return_data array to main JSON response array, IF it contains anything
+        $JSON_response['return_data'] = $return_data;
+        // filter final array
+        $JSON_response = apply_filters('FHEE__EED_Promotions__generate_JSON_response__JSON_response', $JSON_response);
+        // return encoded array
+        wp_send_json($JSON_response);
+    }
+
+    public static function complete_parent_credit_process($transaction)
+    {
+        $user_id = get_current_user_id();
+
+        EE_WPUsers::update_parent_credit_history($user_id, $transaction->ID());
+    }
     /**
      * Adds hook points that are used for handling actions on the wp user registration process.
      */
@@ -195,9 +451,7 @@ class EED_WP_Users_SPCO extends EED_Module
             add_action('register_new_user', array('EED_WP_Users_SPCO', 'auto_login_registered_user'));
             add_action('register_form', array('EED_WP_Users_SPCO', 'add_auto_login_parameter'));
         }
-	
     }
-
 
     /**
      * Callback for AHEE__EED_Single_Page_Checkout__enqueue_styles_and_scripts__attendee_information
@@ -229,6 +483,7 @@ class EED_WP_Users_SPCO extends EED_Module
             array(),
             EE_WPUSERS_VERSION
         );
+
         wp_enqueue_script('eea-wp-users-integration-spco');
         wp_enqueue_style('eea-wp-users-integration-spco-style');
         // add hidden login form in footer if user is not logged in that will get called if user needs to log in.
@@ -1434,4 +1689,87 @@ class EED_WP_Users_SPCO extends EED_Module
         echo $json;
         exit();
     }
+
+    public static function add_parent_credit_input($before_payment_options)
+    {
+        $user_id = get_current_user_id();
+        $parent_credit_balance = EE_WPUsers::get_credit_total_balance($user_id);
+
+        if($parent_credit_balance == null || $parent_credit_balance == 0)
+        {
+            return $before_payment_options;
+        }
+
+        $cardInfo = self::get_card_info();
+        list($first_item, $grand_total, $cart) = $cardInfo; 
+        $first_parent_item = $first_item->parent();
+		  
+        $price = $first_parent_item->unit_price();
+
+        $applicaple_parent_credit = min($price, $parent_credit_balance);
+
+
+        $applied_credit_amount = EE_WPUsers::get_applied_credit_amount($user_id, $first_item->transaction()->ID(), 0);
+        $parent_credit_disabled = $applied_credit_amount != null &&  $applied_credit_amount != 0;
+
+        add_action('wp_enqueue_scripts',  'enqueue_scripts' );
+        EE_Registry::instance()->load_helper('HTML');
+
+        $singular_label = esc_html__('Usable Credit', 'event_espresso');
+
+        $warning_message = $parent_credit_disabled ? "Your credit has been already applied. After credit application you can not use your coupon." : "If you have a coupon, please apply it first, otherwise
+        you can not use your coupon after credit usage.";
+        $parent_credit_balance = $parent_credit_disabled ? 0 : $parent_credit_balance;
+        $before_payment_options->add_subsections(
+           [
+               'parent_credit_form' => new EE_Form_Section_Proper(
+                   [
+                       'layout_strategy' => new EE_No_Layout(['use_break_tags' => false]),
+                       'subsections'     => [
+                        'ee_parent_credit_warning_message' => new EE_Form_Section_HTML(EEH_HTML::p($warning_message)),
+                           'ee_parent_credit_input_wrap_open' => new EE_Form_Section_HTML(
+                               EEH_HTML::h5(
+                                   $singular_label,
+                                   '',
+                                   'ees-parent-credit-header',
+                                   'margin-bottom: .5rem;'
+                               )
+                               . EEH_HTML::div('', '', 'ees-parent-credit-input__wrapper')
+                           ),
+                        
+                           'ee_parent_credit_input'  => new EE_Text_Input(
+                               [
+                                   'default'          => $applicaple_parent_credit,
+                                   'html_id'          => 'ees-parent-credit-input',
+                                   'html_class'       => 'ees-parent-credit-input ee-reg-qstn',
+                                   'html_name'        => 'ee_parent_credit_input',
+                                   'html_label_text'  => $singular_label,
+                                   'html_label_class' => 'screen-reader-text',
+                                   'disabled' => true
+                               ]
+                           ),
+                       
+                           'ee_parent_credit_submit' => new EE_Button_Input(
+                               [
+                                   'html_id'               => 'ees-parent-credit-submit',
+                                   'html_name'             => 'ee_parent_credit_submit',
+                                   'button_content'        => sprintf(esc_html__('Apply %s', 'event_espresso'), $singular_label),
+                                   'other_html_attributes' => 'type="button"',
+                                   'no_label'  => true,
+                                   'disabled' => $parent_credit_disabled
+                               ]
+                           ),
+                           'ee_parent_credit_input_wrap_close' => new EE_Form_Section_HTML(EEH_HTML::divx()),
+                           'ee_parent_credit_header' => new EE_Form_Section_HTML(
+                               EEH_HTML::div(' ', '', 'clear-float')
+                           ),
+                       ],
+                   ]
+               ),
+           ]
+       );
+
+        return $before_payment_options;
+    }
+
 }

@@ -77,7 +77,7 @@
 }
 
 .ee-status-RPP, .ee-status-DTU {
-    background-color: #00B1CA;
+    background-color: #00B1CA !important;
 }
 
 /*cancelled registration, expired event*/
@@ -86,7 +86,7 @@
 }
 
 .ee-status-RCN, .ee-status-DTE {
-    background-color: #ac9d9c;
+    background-color: #ac9d9c !important;
 }
 
 /*declined registration, cancelled event*/
@@ -95,7 +95,7 @@
 }
 
 .ee-status-RDC, .ee-status-DTC {
-    background-color: #e44064;
+    background-color: #e44064 !important;
 }
 
 /*approved registration, active event*/
@@ -104,7 +104,7 @@
 }
 
 .ee-status-RAP, .ee-status-RAP {
-    background-color: #70CC50;
+    background-color: #70CC50 !important;
 }
 
 /*not-approved registration*/
@@ -113,7 +113,7 @@
 }
 
 .ee-status-RNA {
-    background-color: #E76700;
+    background-color: #E76700 !important;
 }
 
 /*waitlist registration, postponed event*/
@@ -122,7 +122,7 @@
 }
 
 .ee-status-RWL, .ee-status-DTP {
-    background-color: #8A549A;
+    background-color: #8A549A !important;
 }
 
 
@@ -141,7 +141,7 @@
 }
 
 .ee-status-RIC, .ee-status-DTS {
-    background-color: #FCB93C;
+    background-color: #FCB93C !important;
 }
 
 /* legend container  - taken from ee-admin-page.css */
@@ -217,3 +217,15 @@
         background-image: url(../images/spinner-2x.gif);
     }
 }
+
+
+#ee-spco-payment_options-reg-step-form-payment-options-before-payment-options {
+	box-sizing: content-box !important;
+	position: relative;
+	margin: 1.5em 0 3em;
+}
+
+#ee-spco-payment_options-reg-step-form-payment-options-before-payment-options #ees-parent-credit-input-lbl h4 {
+	margin:0;
+}
+

@@ -38,7 +38,11 @@ if($object_count > 0): ?>
 <h3><?php echo $your_events_title; ?></h3>
 <div class="espresso-my-events-inner-content">
 <?php endif;
-
+?>
+<p> You can see all your registrations here including pending payments and cancelled registrations. Expand a course by clicking the gear icon to see status and invoice for each registration to that course. </p>
+<br/>
+<br/>
+<?php
 foreach ($objects as $object) :
 
 if ($with_wrapper) : ?>   
@@ -52,6 +56,8 @@ endif;
 if ($object) : 
 
     $attendee = EEM_Attendee::instance()->get_one_by_ID($object['att_id']);
+
+    
 ?>
     <span style="font-family: mathone;color: #101D51; font-weight:normal; font-size:18px;"><?php echo  $attendee->full_name()?> </span> <br>
 
@@ -59,6 +65,18 @@ if ($object) :
     <table class="espresso-my-events-table <?php echo $template_slug; ?>_table">
         <thead class="espresso-table-header-row">
         <tr>
+        <th scope="col" class="espresso-my-events-reg-status ee-status-strip"> </th>
+
+         <td scope="col" class="espresso-my-events-event-th">
+               <span class="self"> <?php echo apply_filters(
+                    'FHEE__loop-espresso_my_events__table_header_event',
+                    esc_html__('Status', 'event_espresso'),
+                    $object_type,
+                    $object['objects'],
+                    $template_slug,
+                    $object['att_id']
+                ); ?> </span>
+            </td>
             <td scope="col" class="espresso-my-events-event-th">
                <span class="self"> <?php echo apply_filters(
                     'FHEE__loop-espresso_my_events__table_header_event',
@@ -114,7 +132,7 @@ if ($object) :
             <td scope="col" class="espresso-my-events-actions-th">
             <span class="self">  <?php echo apply_filters(
                     'FHEE__loop-espresso_my_events__actions_table_header',
-                    esc_html__('Actions', 'event_espresso'),
+                    esc_html__('Registrations', 'event_espresso'),
                     $object_type,
                     $object['objects'],
                     $template_slug,
@@ -127,16 +145,18 @@ if ($object) :
 
          <tbody>
 		<?php	if ($object && count($object['objects']) > 0) { 
-  
            foreach ($object['objects'] as $objectitem) {
             if (! $objectitem instanceof EE_Event) {
                 continue;
             }
+    
             $att_id = $object['att_id'];
             $template_args = array('event'              => $objectitem,
                                    'your_tickets_title' => $your_tickets_title,
                                    'att_id'             => $att_id,
             );
+           
+
             $template      = 'content-espresso_my_events-event_section.template.php';
             EEH_Template::locate_template($template, $template_args, true, false);
            }
@@ -145,6 +165,7 @@ if ($object) :
 		
         <?php  if ($object && count($object['objects']) == 0) { ?>
          <tr>
+         <th scope="col" class="espresso-my-events-reg-status ee-status-strip"> </th>
 			 <td>
             <?php echo apply_filters(
                 'FHEE__loop-espresso_my_events__no_events_message',
@@ -159,7 +180,7 @@ if ($object) :
       </tbody>
     </table>
     </div>
-  
+
 <?php endforeach;?>
 <div class="espresso-my-events-footer">
         <div class="espresso-my-events-pagination-container <?php echo $template_slug; ?>-pagination">
@@ -174,7 +195,8 @@ if ($object) :
             true,
             false
         ); ?>
-    </div>
+</div>
+
 <?php
 if ($with_wrapper) : ?>
     </div>
@@ -182,4 +204,10 @@ if ($with_wrapper) : ?>
     </div>
 <?php
 endif;
-// end $wrapper check
+
+
+      $template_args = array('event_id'              => 1);
+       $template      = 'parent-credit-history.template.php';
+       EEH_Template::locate_template($template, $template_args, true, false);
+?>
+
