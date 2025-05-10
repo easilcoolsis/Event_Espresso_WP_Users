@@ -279,11 +279,14 @@ class EE_WPUsers extends EE_Addon
          global $wpdb;
          $tableName= $wpdb->prefix."asa_parent_credit_history";
  
- 
-         $query = "SELECT IFNULL(SUM(CASE WHEN credit_debit = 'D' THEN credit_amount ELSE credit_amount*-1 END), 0)
-                     FROM $tableName
-                 WHERE parent_user_id = $userId
-                     AND status = 1";
+         $query = "SELECT IFNULL(SUM(x.credit_amount),0) FROM
+                     (SELECT SUM(CASE WHEN credit_debit = 'D' THEN credit_amount ELSE credit_amount*-1 END) credit_amount
+                       FROM $tableName
+                   WHERE parent_user_id = $userId
+                     AND status = 1
+                    AND (expire_date is null or expire_date >= CURDATE())
+                    GROUP BY IFNULL(debit_ref_id, id)
+                    HAVING SUM(CASE WHEN credit_debit = 'D' THEN credit_amount ELSE credit_amount*-1 END) > 0) x";
  
          $creditBalance = $wpdb->get_var($query);
  
@@ -296,7 +299,7 @@ class EE_WPUsers extends EE_Addon
           global $wpdb;
           $tableName= $wpdb->prefix."asa_parent_credit_history";
   
-          $query = "SELECT description, credit_debit, course_price, credit_amount, create_date  
+          $query = "SELECT description, credit_debit, course_price, credit_amount, create_date , expire_date
                       FROM $tableName
                   WHERE parent_user_id = $userId
                       AND status = 1
@@ -306,6 +309,7 @@ class EE_WPUsers extends EE_Addon
             
           return $history;
       }
+
      public static function get_applied_credit_amount($userId, $txn_id)
      {
           global $wpdb;
@@ -321,6 +325,47 @@ class EE_WPUsers extends EE_Addon
           return $appliedCreditAmount;
       }
       
+      public static function get_unexpired_debit_records($userId)
+      {
+           global $wpdb;
+           $tableName= $wpdb->prefix."asa_parent_credit_history";
+           $query = "SELECT expire_date, h.id, x.credit_amount
+           FROM  $tableName h ,
+           (SELECT IFNULL(debit_ref_id, id) id,  SUM(CASE WHEN credit_debit = 'D' THEN credit_amount ELSE credit_amount*-1 END) credit_amount
+                                  FROM $tableName
+                              WHERE parent_user_id = $userId
+                                AND status = 1
+                               AND (expire_date is null or expire_date >= CURDATE())
+                               GROUP BY IFNULL(debit_ref_id, id)
+                               HAVING SUM(CASE WHEN credit_debit = 'D' THEN credit_amount ELSE credit_amount*-1 END) > 0 ) x
+                               WHERE x.id = h.id
+                              ORDER BY IFNULL(expire_date,'9999-12-12'), h.id";
+   
+           $unexpiredDebitRecords = $wpdb->get_results($query, 'ARRAY_A');
+   
+           return $unexpiredDebitRecords;
+      }
+
+      public static function get_debit_ref_ids($userId)
+      {
+
+        global $wpdb;
+        $tableName= $wpdb->prefix."asa_parent_credit_history";
+        $query = "SELECT  IFNULL(debit_ref_id, id) id, SUM(CASE WHEN credit_debit = 'D' THEN credit_amount ELSE credit_amount*-1 END) credit_amount
+                    FROM  $tableName
+                    WHERE status = 1
+                     AND parent_user_id = $userId
+                     AND (expire_date is null or expire_date >= CURDATE())
+                    GROUP BY IFNULL(debit_ref_id, id)
+                   HAVING SUM(CASE WHEN credit_debit = 'D' THEN credit_amount ELSE credit_amount*-1 END) > 0
+                   ORDER BY  IFNULL(debit_ref_id, id) desc";
+
+        $debitRefIds = $wpdb->get_results($query, 'ARRAY_A');
+        
+        return $debitRefIds;           
+
+      }
+
       public static function update_parent_credit_history($userId, $txn_id)
       {
            date_default_timezone_set('America/Los_Angeles');
@@ -365,12 +410,16 @@ class EE_WPUsers extends EE_Addon
         $reg_id, 
         $credit_debit, 
         $course_price,
-        $txn_id)
+        $txn_id,
+        $office_note,
+        $debit_ref_id,
+        $expire_date,
+        $total_credit_amount)
  {
     if($credit_debit == 'C' &&  $admin == false)
     {
         $appliedCreditAmount = self::get_applied_credit_amount( $parent_user_id, $txn_id );
-        if($appliedCreditAmount > 0)
+        if($appliedCreditAmount >= $total_credit_amount)
         {
             return;
         }
@@ -380,7 +429,7 @@ class EE_WPUsers extends EE_Addon
      global $wpdb;
      $tableName= $wpdb->prefix."asa_parent_credit_history";
      $current_user_id = get_current_user_id();
- 
+   
      $wpdb->insert(
              $tableName,
              array(
@@ -394,7 +443,10 @@ class EE_WPUsers extends EE_Addon
                  'status' => $status,
                  'registration_id' => $reg_id,
                  'course_price' => $course_price,
-                 'transaction_id'=> $txn_id
+                 'transaction_id'=> $txn_id,
+                 'office_note' => $office_note,
+                 'debit_ref_id' => $debit_ref_id,
+                 'expire_date' => $expire_date
              )
          );
     date_default_timezone_set('UTC');     

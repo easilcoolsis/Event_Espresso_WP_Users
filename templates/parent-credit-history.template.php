@@ -27,7 +27,9 @@
          <td scope="col" class="espresso-my-events-event-th">
                <span class="self">Date</span>
          </td>
-  
+         <td scope="col" class="espresso-my-events-event-th">
+               <span class="self">Expiry Date</span>
+         </td>
         </tr>
         </thead>
         <tbody>
@@ -51,6 +53,9 @@
             </td>
             <td>
               <?php echo  $history_rec["create_date"]; ?>
+            </td>
+            <td>
+              <?php echo  $history_rec["expire_date"]; ?>
             </td>
         </tr>
         <?php }?>

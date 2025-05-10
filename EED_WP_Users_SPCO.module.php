@@ -307,6 +307,23 @@ class EED_WP_Users_SPCO extends EED_Module
         return  [$first_item, $grand_total, $cart];
     }
 
+    private static function add_credit_records($event_name, $credit_amount, $user_id, $event_id, $reg_id, $price, $transaction_id )
+    {
+
+        $valid_debit_recs = EE_WPUsers::get_unexpired_debit_records($user_id);
+        $total_credit_amount = $credit_amount;
+        foreach ($valid_debit_recs as $index => $valid_debit_rec)
+        {
+           $used_amount = min($credit_amount, $valid_debit_rec['credit_amount']);
+           EE_WPUsers::add_credit_history(false, $event_name , $used_amount, $user_id, 0, 
+           $event_id,  $reg_id , 'C', $price,  $transaction_id, null, $valid_debit_rec['id'] , null, $total_credit_amount);		
+           $credit_amount = $credit_amount - $used_amount;
+           if ($credit_amount == 0)
+           {
+             break;
+           }
+        } 
+    }
 
     public static function submit_parent_credit()
     {
@@ -375,8 +392,8 @@ class EED_WP_Users_SPCO extends EED_Module
 			}
 		}
      
-        EE_WPUsers::add_credit_history(false, $event_name , $credit_amount, $user_id, 0, $event_id,  $reg_id , 'C', $price,  $first_item->transaction()->ID());
-			
+        self::add_credit_records($event_name, $credit_amount, $user_id, $event_id, $reg_id, $price, $first_item->transaction()->ID());
+
 		$grand_total->recalculate_total_including_taxes();
 
         $cart->save_cart(false);
