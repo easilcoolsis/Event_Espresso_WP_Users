@@ -283,13 +283,6 @@ class EED_WP_Users_Ticket_Selector extends EED_Module
             if (! $sign_up_form instanceof EE_Form_Section_Proper) {
                 return $subsections;
             }
-            $inputs = $sign_up_form->subsections(false);
-            if (isset($inputs['registrant_name']) && $inputs['registrant_name'] instanceof EE_Text_Input) {
-                $inputs['registrant_name']->set_default($user->display_name);
-            }
-            if (isset($inputs['registrant_email']) && $inputs['registrant_email'] instanceof EE_Email_Input) {
-                $inputs['registrant_email']->set_default($user->user_email);
-            }
         }
         return $subsections;
     }
@@ -332,6 +325,7 @@ class EED_WP_Users_Ticket_Selector extends EED_Module
             );
             $sign_up_form->add_subsections(
                 array(
+					 
                     'login_required' => new EE_Form_Section_HTML(
                         EED_WP_Users_Ticket_Selector::userLoginNoticeHeading(
                             esc_html__('Login Required', 'event_espresso'),

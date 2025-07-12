@@ -6,7 +6,6 @@
  * @type    string $template_slug The slug for the called template. eg. 'simple_list_table', or 'event_section'.
  */
 $reg_statuses = EEM_Registration::reg_status_array(array(), true);
-unset($reg_statuses["RWL"]);
 $per_col      = 5;
 $count        = 1;
 

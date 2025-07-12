@@ -245,11 +245,25 @@ class EED_WP_Users_SPCO extends EED_Module
             array('EED_WP_Users_SPCO', 'send_notification_to_admin')
         );
 	
+        add_action(
+            'AHEE__EventEspresso_WaitList_domain_services_commands_CreateWaitListRegistrationsCommandHandler__createRegistrations',
+            'link_parent_to_attendee');
 
         EED_WP_Users_SPCO::_add_user_registration_route_hooks();
     }
 
-
+ 
+    
+    function link_parent_to_attendee(array $registrations_added_to_waitlist)
+    {
+        $user = wp_get_current_user();
+        $registration = reset($registrations_added_to_waitlist);
+        $attendee = $registration->attendee();
+        $att_id = empty($att_id) ? get_user_option('EE_Attendee_ID-'.$attendee->ID(), $user->ID) : $att_id;
+        if (empty($att_id)) {
+            update_user_option($user->ID, 'EE_Attendee_ID-'.$attendee->ID(), $attendee->ID());
+        }
+    }
       /**
      *    _get_payment_info
      *

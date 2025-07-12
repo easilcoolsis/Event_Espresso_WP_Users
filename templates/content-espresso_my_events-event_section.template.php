@@ -29,6 +29,10 @@ $cancelled = array_filter($registrations, function($registration) {
     return $registration->status_ID() == 'RCN';
 });
 
+$waitlist = array_filter($registrations, function($registration) {
+    return $registration->status_ID() == 'RWL';
+});
+
  $status  = '';
  if (count($approved) > 0)
  {
@@ -53,6 +57,10 @@ $cancelled = array_filter($registrations, function($registration) {
  else if (count($pending) > 0)
  {
     $status_code = 'RPP';
+ }
+ else if (count($waitlist) > 0)
+ {
+    $status_code = 'RWL';
  }
 
  $status = $reg_statuses[$status_code];
