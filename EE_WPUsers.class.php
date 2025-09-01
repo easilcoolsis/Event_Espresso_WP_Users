@@ -269,7 +269,7 @@ class EE_WPUsers extends EE_Addon
         }
         $settings       = $event->get_post_meta('ee_wpuser_integration_settings', true);
         $settings       = empty($settings) ? array() : $settings;
-        if(isset($settings[ $key ]))
+      
         $settings[ $key ] = $value;
         return $event->update_post_meta('ee_wpuser_integration_settings', $settings);
     }
