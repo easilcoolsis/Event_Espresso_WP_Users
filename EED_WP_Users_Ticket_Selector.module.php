@@ -14,6 +14,7 @@ use EventEspresso\WaitList\domain\services\forms\WaitListForm;
 use EventEspresso\WaitList\domain\services\forms\WaitListFormHandler;
 use EventEspresso\WpUser\domain\entities\exceptions\WpUserLogInRequiredException;
 use EventEspresso\WpUser\domain\services\users\WpUserEmailVerification;
+use EventEspresso\core\exceptions\InvalidFormSubmissionException;
 
 /**
  * EED_WP_Users_Ticket_Selector module.  Takes care of WP Users integration with ticket selector.
@@ -379,6 +380,7 @@ class EED_WP_Users_Ticket_Selector extends EED_Module
                 $wait_list_form = $login_notice . $wait_list_form;
                 $event->delete_extra_meta($login_notice_id);
             }
+            
         }
         return $wait_list_form;
     }
@@ -554,6 +556,25 @@ class EED_WP_Users_Ticket_Selector extends EED_Module
         return $tickets;
     }
 
+ 
+    private static function getParentWaitlistCourse($eventId, $attEmail)
+    {
+        global $wpdb;
+        $tableName1= $wpdb->prefix."esp_registration";
+        $tableName2= $wpdb->prefix."esp_attendee_meta";
+      
+        $query = "SELECT 1
+                    FROM $tableName1 r
+                    INNER JOIN $tableName2 a ON r.ATT_ID = a.ATT_ID
+                    WHERE sts_id IN( 'RWL', 'RPP', 'RAP')
+                     and evt_id = $eventId
+                     and a.att_email = '$attEmail'
+                    LIMIT 1";
+ 	
+         $hasRegisteredToWaitList = $wpdb->get_var($query);
+		
+         return $hasRegisteredToWaitList == 1;
+    }
 
     /**
      * Checks valid data when the Wait List Sign Up form has been submitted,
@@ -570,6 +591,23 @@ class EED_WP_Users_Ticket_Selector extends EED_Module
      */
     public static function checkSubmittedWaitListTicketCaps(array $valid_form_data, FormHandler $form_handler)
     {
+        $email = $valid_form_data['hidden_inputs']['registrant_email'];
+     
+        if(EED_WP_Users_Ticket_Selector::getParentWaitlistCourse($form_handler->event()->ID(),  $email))
+        {
+			  throw new InvalidFormSubmissionException(
+                'Wait List Form',
+                sprintf(
+                    esc_html__(
+                        'You already have an existing Registration or are on the Wait List for this course. You are not eligible to join the Wait List.',
+                        'event_espresso'
+                    ),
+                   'Wait List Form',
+                    '<br />'
+                )
+            );
+        }
+  
         if (! $form_handler instanceof WaitListFormHandler) {
             return $valid_form_data;
         }
